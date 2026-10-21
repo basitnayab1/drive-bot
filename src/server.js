@@ -435,12 +435,14 @@ app.get('/api/config/oauth-status', (req, res) => {
 });
 
 // Start Server
-const server = app.listen(config.PORT, () => {
-  console.log(`=================================================`);
-  console.log(`🚀 Drive Client Drop Portal is running!`);
-  console.log(`💻 Admin Dashboard: http://localhost:${config.PORT}`);
-  console.log(`📁 Upload destination: ${config.GOOGLE_DRIVE_FOLDER_ID ? 'Google Drive Folder: ' + config.GOOGLE_DRIVE_FOLDER_ID : 'Local fallback + Google Drive'}`);
-  console.log(`=================================================`);
-});
+if (!process.env.VERCEL) {
+  app.listen(config.PORT, () => {
+    console.log(`=================================================`);
+    console.log(`🚀 Drive Client Drop Portal is running!`);
+    console.log(`💻 Admin Dashboard: http://localhost:${config.PORT}`);
+    console.log(`📁 Upload destination: ${config.GOOGLE_DRIVE_FOLDER_ID ? 'Google Drive Folder: ' + config.GOOGLE_DRIVE_FOLDER_ID : 'Local fallback + Google Drive'}`);
+    console.log(`=================================================`);
+  });
+}
 
-module.exports = { app, server };
+module.exports = app;
