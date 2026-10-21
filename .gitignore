@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Secrets & Environment
+.env
+google-credentials.json
+data/oauth_tokens.json
+data/oauth_client.json
+
+# Local Uploads & Temp Files
+uploads/*
+!uploads/.gitkeep
+
+# System & Editor
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*

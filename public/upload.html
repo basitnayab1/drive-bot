@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Files - Secure Client Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/upload.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+  <div class="upload-wrapper">
+    <!-- Brand Header -->
+    <div class="brand-header">
+      <div class="brand-badge">
+        <i class="fa-solid fa-shield-halved"></i> Direct Cloud Ingestion Portal
+      </div>
+      <h1 id="pageTitle">Client File Upload</h1>
+      <p id="pageSubtitle">Please select or drag your files below to upload directly to our storage.</p>
+    </div>
+
+    <!-- Main Upload Card -->
+    <div class="upload-card">
+
+      <!-- Loading State -->
+      <div id="loadingState" style="text-align: center; padding: 3rem 1rem;">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.5rem; color: #818cf8; margin-bottom: 1rem;"></i>
+        <p style="color: var(--text-muted);">Verifying upload link validity...</p>
+      </div>
+
+      <!-- EXPIRED STATE: Shown if admin expired the link or time passed -->
+      <div id="expiredState" class="expired-state">
+        <div class="expired-icon">
+          <i class="fa-solid fa-hourglass-end"></i>
+        </div>
+        <h2>Upload Link Expired</h2>
+        <p>This file upload link has expired or has been closed by the owner. No new uploads are currently being accepted through this link.</p>
+        <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.02); border-radius: 8px; font-size: 0.85rem; color: var(--text-muted);">
+          If you still need to send your files, please contact the person who provided you with this link to request a fresh upload link.
+        </div>
+      </div>
+
+      <!-- ACTIVE UPLOAD STATE: Shown when link is valid & active -->
+      <div id="activeState" style="display: none;">
+        
+        <!-- Client Instructions Box (if set by admin) -->
+        <div id="instructionsBox" style="display: none; background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 8px; padding: 0.85rem 1.15rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: #c7d2fe;">
+          <i class="fa-solid fa-circle-info" style="margin-right: 6px;"></i> <span id="instructionsText"></span>
+        </div>
+
+        <!-- Drag & Drop Zone -->
+        <div id="dropzone" class="dropzone" onclick="triggerFileInput()">
+          <input type="file" id="fileInput" multiple style="display: none;" onchange="handleFilesSelected(this.files)">
+          <div class="dropzone-icon">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+          </div>
+          <h3>Choose files or drag & drop here</h3>
+          <p>Any file type supported • Max <span id="maxSizeText">500</span> MB per upload</p>
+          <button type="button" class="btn-upload-more" onclick="event.stopPropagation(); triggerFileInput()">
+            <i class="fa-solid fa-folder-open"></i> Browse Files
+          </button>
+        </div>
+
+        <!-- Selected Files List -->
+        <div id="fileList" class="file-list" style="display: none;"></div>
+
+        <!-- Upload Progress Indicator -->
+        <div id="progressContainer" class="progress-container">
+          <div class="progress-bar-outer">
+            <div id="progressBar" class="progress-bar-inner"></div>
+          </div>
+          <div class="progress-status">
+            <span id="progressText">Uploading...</span>
+            <span id="progressPercent">0%</span>
+          </div>
+        </div>
+
+        <!-- Upload Button -->
+        <button id="btnUpload" class="upload-btn" onclick="startUpload()" style="display: none;">
+          <i class="fa-solid fa-upload"></i> Upload <span id="fileCountBadge">0</span> Files
+        </button>
+      </div>
+
+      <!-- SUCCESS STATE: Shown after upload completes -->
+      <div id="successState" class="success-screen">
+        <div class="success-icon">
+          <i class="fa-solid fa-check"></i>
+        </div>
+        <h2>Files Uploaded Successfully!</h2>
+        <p id="successMessage">Your files have been safely received and stored in our cloud drive.</p>
+        
+        <div id="uploadedFilesSummary" style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; text-align: left; font-size: 0.85rem; max-height: 180px; overflow-y: auto;">
+          <!-- List of uploaded files -->
+        </div>
+
+        <button class="btn-upload-more" onclick="resetUploader()">
+          <i class="fa-solid fa-plus"></i> Upload Additional Files
+        </button>
+      </div>
+
+    </div>
+
+    <div class="footer-note">
+      <i class="fa-solid fa-lock"></i> Protected with end-to-end cloud ingestion • CloudDrop
+    </div>
+  </div>
+
+  <script src="/js/upload.js"></script>
+</body>
+</html>

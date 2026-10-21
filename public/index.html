@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drive Drop Portal - Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <nav class="navbar">
+    <a href="/" class="nav-brand">
+      <div class="brand-icon">
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+      </div>
+      <div class="brand-text">
+        <h1>CloudDrop Portal</h1>
+        <span>Client File Ingestion & Auto-Drive Sync</span>
+      </div>
+    </a>
+
+    <div class="nav-actions">
+      <!-- Drive Status Pill -->
+      <div id="driveStatusPill" class="status-pill" onclick="openDriveModal()">
+        <span class="status-dot warning" id="driveDot"></span>
+        <span id="driveStatusText">Checking Drive...</span>
+      </div>
+
+      <button id="btnOpenNewLink" class="btn btn-primary" onclick="openCreateModal()">
+        <i class="fa-solid fa-plus"></i> Create Upload Link
+      </button>
+
+      <button class="btn btn-secondary btn-icon" onclick="openDriveModal()" title="Drive Settings & Credentials">
+        <i class="fa-solid fa-gear"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="container">
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon indigo">
+          <i class="fa-solid fa-link"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Total Links</h3>
+          <div class="stat-number" id="statTotalLinks">0</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon emerald">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Active Links</h3>
+          <div class="stat-number" id="statActiveLinks">0</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon amber">
+          <i class="fa-solid fa-hourglass-end"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Expired Links</h3>
+          <div class="stat-number" id="statExpiredLinks">0</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <i class="fa-solid fa-folder-open"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Files Received</h3>
+          <div class="stat-number" id="statFilesUploaded">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active & Manage Links Section -->
+    <div class="card">
+      <div class="card-header">
+        <div class="section-title">
+          <h2>Client Upload Links</h2>
+          <p>Share these links with clients. Files will upload straight into your Google Drive.</p>
+        </div>
+        <div>
+          <button class="btn btn-secondary btn-sm" onclick="loadDashboard()">
+            <i class="fa-solid fa-arrows-rotate"></i> Refresh
+          </button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div id="linksContainer" class="links-grid">
+          <!-- Links will be rendered here dynamically -->
+          <div class="empty-state">
+            <div class="empty-state-icon"><i class="fa-solid fa-link-slash"></i></div>
+            <h3>No upload links created yet</h3>
+            <p>Click "Create Upload Link" above to generate your first link for a client.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Uploads Log Section -->
+    <div class="card">
+      <div class="card-header">
+        <div class="section-title">
+          <h2>Uploaded Files History</h2>
+          <p>Real-time log of files uploaded by clients and synced to your cloud storage.</p>
+        </div>
+        <div id="syncPendingBtnWrapper" style="display: none;">
+          <button class="btn btn-success btn-sm" onclick="syncPendingFiles()">
+            <i class="fa-brands fa-google-drive"></i> Sync Pending Files to Drive
+          </button>
+        </div>
+      </div>
+
+      <div class="card-body" style="padding: 0;">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>File Name</th>
+                <th>Client / Link</th>
+                <th>Size</th>
+                <th>Uploaded Time</th>
+                <th>Destination Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="uploadsTableBody">
+              <tr>
+                <td colspan="6" class="empty-state">
+                  No files uploaded yet. Once a client uploads a file, it will appear here.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: Create New Link -->
+  <div id="createLinkModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-link" style="color: #6366f1; margin-right: 8px;"></i> Create New Client Upload Link</h3>
+        <button class="modal-close" onclick="closeCreateModal()">&times;</button>
+      </div>
+      <form id="createLinkForm" onsubmit="handleCreateLink(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="linkTitle">Link Title / Purpose *</label>
+            <input type="text" id="linkTitle" class="form-control" placeholder="e.g. Website Assets from Client ABC" required>
+            <div class="form-help">A title to identify what this link is for.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="clientName">Client Name (Optional)</label>
+            <input type="text" id="clientName" class="form-control" placeholder="e.g. John Doe / TechCorp">
+            <div class="form-help">Shown on the client upload page as a personalized welcome.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="destinationFolder">Google Drive Subfolder (Optional)</label>
+            <input type="text" id="destinationFolder" class="form-control" placeholder="e.g. Client-John-Assets">
+            <div class="form-help">Automatically creates this subfolder inside your Google Drive.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="expiryOption">Expiration Settings</label>
+            <select id="expiryOption" class="form-control" onchange="toggleCustomExpiry(this.value)">
+              <option value="never">Manual Expire (Expire whenever you want with 1 click)</option>
+              <option value="1h">Auto-expire in 1 Hour</option>
+              <option value="24h">Auto-expire in 24 Hours (1 Day)</option>
+              <option value="7d">Auto-expire in 7 Days (1 Week)</option>
+              <option value="30d">Auto-expire in 30 Days (1 Month)</option>
+              <option value="custom">Custom Date & Time</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="customExpiryGroup" style="display: none;">
+            <label for="customExpiryDate">Select Expiration Date & Time</label>
+            <input type="datetime-local" id="customExpiryDate" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="maxFileSize">Max File Size Limit (MB)</label>
+            <input type="number" id="maxFileSize" class="form-control" value="500" min="1" max="5000">
+          </div>
+
+          <div class="form-group">
+            <label for="linkNotes">Instructions for Client (Optional)</label>
+            <textarea id="linkNotes" class="form-control" placeholder="e.g. Please upload your high-resolution logo and brand guidelines in PDF/PNG format."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitLink">
+            <i class="fa-solid fa-check"></i> Generate Link
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Google Drive Settings & Setup Wizard -->
+  <div id="driveSettingsModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3><i class="fa-brands fa-google-drive" style="color: #34d399; margin-right: 8px;"></i> Google Drive Connection Settings</h3>
+        <button class="modal-close" onclick="closeDriveModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Live Diagnostic Box -->
+        <div id="driveDiagnosticBox" style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+            <strong id="diagnosticTitle">Connection Status</strong>
+            <button class="btn btn-secondary btn-sm" onclick="checkDriveConnection()">
+              <i class="fa-solid fa-rotate-right"></i> Test Now
+            </button>
+          </div>
+          <p id="diagnosticMsg" style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Checking...</p>
+        </div>
+
+        <!-- Method Selector Tabs -->
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+          <button type="button" id="tabOAuthBtn" class="btn btn-sm btn-primary" onclick="switchDriveTab('oauth')">
+            <i class="fa-brands fa-google"></i> Personal Account (15GB OAuth - Recommended)
+          </button>
+          <button type="button" id="tabServiceBtn" class="btn btn-sm btn-secondary" onclick="switchDriveTab('service')">
+            <i class="fa-solid fa-robot"></i> Service Account
+          </button>
+        </div>
+
+        <!-- Target Drive Folder ID (Common for both) -->
+        <div class="form-group">
+          <label for="driveFolderIdInput">Google Drive Target Folder ID *</label>
+          <input type="text" id="driveFolderIdInput" class="form-control" placeholder="e.g. 1GC0f65mhEcvTtuqikyAuJMMiMs_Y5e0K">
+          <div class="form-help">Open your Google Drive folder in browser. The ID is the long string at the end of the URL.</div>
+        </div>
+
+        <!-- TAB 1: OAuth2 (Personal Drive) -->
+        <div id="oauthSection">
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; line-height: 1.6;">
+            <h4 style="color: #6ee7b7; margin-bottom: 0.5rem;"><i class="fa-solid fa-circle-check"></i> Recommended for Personal Gmail (15GB Storage):</h4>
+            <p style="color: var(--text-muted); margin-bottom: 0.5rem;">Google gives free 15GB storage to your personal account. With OAuth, files are saved directly in your personal quota without any bot restrictions.</p>
+            <ol style="margin-left: 1.25rem; color: var(--text-muted);">
+              <li>Google Cloud Console me <strong>Credentials</strong> &rarr; <strong>Create Credentials</strong> &rarr; <strong>OAuth client ID</strong> pr click karein.</li>
+              <li>Application type: <strong>Web application</strong> select karein.</li>
+              <li>Authorized redirect URIs me yeh add karein: <code style="color: #38bdf8;">http://localhost:3000/oauth2callback</code></li>
+              <li>Wahan se <strong>Client ID</strong> aur <strong>Client Secret</strong> copy kr k neeche paste karein.</li>
+            </ol>
+          </div>
+
+          <div class="form-group">
+            <label for="oauthClientId">OAuth Client ID</label>
+            <input type="text" id="oauthClientId" class="form-control" placeholder="e.g. 123456789-xyz.apps.googleusercontent.com">
+          </div>
+
+          <div class="form-group">
+            <label for="oauthClientSecret">OAuth Client Secret</label>
+            <input type="password" id="oauthClientSecret" class="form-control" placeholder="e.g. GOCSPX-xxxxxxxxx">
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; align-items: center; margin-top: 1rem;">
+            <button type="button" class="btn btn-primary" onclick="saveOAuthAndLogin()">
+              <i class="fa-brands fa-google"></i> Connect & Sign in with Google
+            </button>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">(Opens Google login to authorize access)</span>
+          </div>
+        </div>
+
+        <!-- TAB 2: Service Account (Workspace / Shared Drives) -->
+        <div id="serviceAccountSection" style="display: none;">
+          <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; font-size: 0.85rem; line-height: 1.6;">
+            <h4 style="color: #a5b4fc; margin-bottom: 0.5rem;"><i class="fa-solid fa-circle-info"></i> Google Service Account:</h4>
+            <p style="color: var(--text-muted);">For Google Workspace or Shared Drives. Free personal Gmail accounts require OAuth above because Service Accounts have 0 bytes personal quota.</p>
+          </div>
+
+          <div class="form-group">
+            <label for="serviceAccountJsonInput">Service Account JSON (google-credentials.json)</label>
+            <textarea id="serviceAccountJsonInput" class="form-control" style="font-family: monospace; font-size: 0.75rem; height: 100px;" placeholder="Paste the contents of your Google Service Account JSON file here..."></textarea>
+          </div>
+
+          <button type="button" class="btn btn-secondary" onclick="saveDriveSettings()">
+            <i class="fa-solid fa-floppy-disk"></i> Save Service Account
+          </button>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeDriveModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>
