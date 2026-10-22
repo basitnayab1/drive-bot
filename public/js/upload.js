@@ -3,6 +3,7 @@
 let linkId = '';
 let selectedFiles = [];
 let linkData = null;
+let activePreviewIndex = -1;
 
 document.addEventListener('DOMContentLoaded', () => {
   // Extract link ID from path /u/:id or /upload/:id
@@ -183,6 +184,7 @@ function handleFilesSelected(files) {
   if (!files || files.length === 0) return;
 
   const maxBytes = (linkData?.maxFileSizeMB || 500) * 1024 * 1024;
+  let firstNewIdx = -1;
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
@@ -194,12 +196,21 @@ function handleFilesSelected(files) {
 
     // Avoid exact duplicate in current selection
     if (!selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
-      if (file.type && file.type.startsWith('image/')) {
+      const type = (file.type || '').toLowerCase();
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+
+      // Generate local object URL for previewing image, video, or audio
+      if (type.startsWith('image/') || type.startsWith('video/') || type.startsWith('audio/') || 
+          ['jpg','jpeg','png','gif','webp','svg','mp4','mov','webm','avi','mkv','mp3','wav'].includes(ext)) {
         try {
           file._previewUrl = URL.createObjectURL(file);
         } catch (e) {}
       }
+
       selectedFiles.push(file);
+      if (firstNewIdx === -1) {
+        firstNewIdx = selectedFiles.length - 1;
+      }
     }
   }
 
@@ -207,6 +218,15 @@ function handleFilesSelected(files) {
   document.getElementById('fileInput').value = '';
 
   renderFileList();
+
+  // If no preview is currently open and we just added media, open preview on the first newly added item
+  if (activePreviewIndex === -1 && firstNewIdx !== -1 && window.innerWidth > 900) {
+    const firstAdded = selectedFiles[firstNewIdx];
+    const info = getFileTypeInfo(firstAdded);
+    if (info.type === 'image' || info.type === 'video') {
+      openSidePreview(firstNewIdx);
+    }
+  }
 }
 
 function renderFileList() {
@@ -221,6 +241,7 @@ function renderFileList() {
     if (section) section.style.display = 'none';
     if (fileListEl) fileListEl.innerHTML = '';
     if (uploadBtn) uploadBtn.style.display = 'none';
+    closeSidePreview();
     return;
   }
 
@@ -242,8 +263,10 @@ function renderFileList() {
       previewHtml = `<div class="file-icon-badge ${info.className}"><i class="fa-solid ${info.icon}"></i></div>`;
     }
 
+    const isActive = activePreviewIndex === idx;
+
     return `
-      <div class="file-item-card" id="fileItem_${idx}">
+      <div class="file-item-card ${isActive ? 'is-active-preview' : ''}" id="fileItem_${idx}" onclick="toggleSidePreview(${idx})" title="Click to view ${info.type === 'video' ? 'video' : info.type === 'image' ? 'photo' : 'file'} on side">
         <div class="file-item-left">
           ${previewHtml}
           <div class="file-details">
@@ -251,15 +274,124 @@ function renderFileList() {
             <div class="file-meta-row">
               <span class="badge-ext">${escapeHtml(info.ext)}</span>
               <span>${formatBytes(file.size)}</span>
+              ${isActive ? '<span class="badge-ext" style="background: rgba(99, 102, 241, 0.25); color: #c7d2fe;"><i class="fa-solid fa-eye"></i> Viewing</span>' : ''}
             </div>
           </div>
         </div>
-        <button type="button" class="btn-remove-item" onclick="removeFile(${idx})" title="Remove this file">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span class="btn-card-preview" title="View file on side">
+            <i class="fa-solid ${isActive ? 'fa-eye-slash' : 'fa-eye'}"></i> ${isActive ? 'Close' : 'View'}
+          </span>
+          <button type="button" class="btn-remove-item" onclick="event.stopPropagation(); removeFile(${idx})" title="Remove this file">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
       </div>
     `;
   }).join('');
+}
+
+// Side preview controls
+function openSidePreview(index) {
+  if (index < 0 || index >= selectedFiles.length) return;
+
+  activePreviewIndex = index;
+  const file = selectedFiles[index];
+  const info = getFileTypeInfo(file);
+
+  const panel = document.getElementById('sidePreviewPanel');
+  const container = document.getElementById('portalContainer');
+  const body = document.getElementById('sidePreviewBody');
+  const nameEl = document.getElementById('sidePreviewFileName');
+  const metaEl = document.getElementById('sidePreviewMeta');
+  const navIndexEl = document.getElementById('previewNavIndex');
+
+  if (!panel || !body) return;
+
+  panel.style.display = 'block';
+  if (container) container.classList.add('has-preview');
+
+  if (nameEl) {
+    nameEl.innerText = file.name || 'File Preview';
+    nameEl.title = file.name || '';
+  }
+  if (metaEl) {
+    metaEl.innerText = `${info.ext} • ${formatBytes(file.size)}`;
+  }
+  if (navIndexEl) {
+    navIndexEl.innerText = `File ${index + 1} of ${selectedFiles.length}`;
+  }
+
+  // Render media content
+  if (info.type === 'image' && file._previewUrl) {
+    body.innerHTML = `<img src="${file._previewUrl}" alt="${escapeHtml(file.name)}" class="side-media-img">`;
+  } else if (info.type === 'video' && file._previewUrl) {
+    body.innerHTML = `
+      <video class="side-media-video" controls autoplay playsinline>
+        <source src="${file._previewUrl}" type="${file.type || 'video/mp4'}">
+        Your browser does not support the video tag.
+      </video>
+    `;
+  } else if (info.type === 'audio' && file._previewUrl) {
+    body.innerHTML = `
+      <div style="text-align: center; width: 100%; padding: 2rem 1rem;">
+        <div class="side-doc-icon ${info.className}" style="font-size: 3rem; margin-bottom: 1rem;"><i class="fa-solid fa-music"></i></div>
+        <audio class="side-media-audio" controls autoplay style="width: 100%;">
+          <source src="${file._previewUrl}" type="${file.type || 'audio/mpeg'}">
+        </audio>
+      </div>
+    `;
+  } else {
+    body.innerHTML = `
+      <div class="side-doc-card">
+        <div class="side-doc-icon ${info.className}"><i class="fa-solid ${info.icon}"></i></div>
+        <h4 style="color: #f1f5f9; margin-bottom: 0.5rem; word-break: break-all; font-size: 1rem;">${escapeHtml(file.name)}</h4>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">${info.ext} Document • ${formatBytes(file.size)}</p>
+        <div style="margin-top: 1.25rem; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(16, 185, 129, 0.12); color: #34d399; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">
+          <i class="fa-solid fa-circle-check"></i> Ready for upload
+        </div>
+      </div>
+    `;
+  }
+
+  renderFileList();
+}
+
+function closeSidePreview() {
+  activePreviewIndex = -1;
+  const panel = document.getElementById('sidePreviewPanel');
+  const container = document.getElementById('portalContainer');
+  const body = document.getElementById('sidePreviewBody');
+
+  if (body) body.innerHTML = '';
+  if (panel) panel.style.display = 'none';
+  if (container) container.classList.remove('has-preview');
+
+  renderFileList();
+}
+
+function toggleSidePreview(index) {
+  if (activePreviewIndex === index) {
+    closeSidePreview();
+  } else {
+    openSidePreview(index);
+  }
+}
+
+function prevPreview() {
+  if (activePreviewIndex > 0) {
+    openSidePreview(activePreviewIndex - 1);
+  } else if (selectedFiles.length > 0) {
+    openSidePreview(selectedFiles.length - 1);
+  }
+}
+
+function nextPreview() {
+  if (activePreviewIndex < selectedFiles.length - 1) {
+    openSidePreview(activePreviewIndex + 1);
+  } else if (selectedFiles.length > 0) {
+    openSidePreview(0);
+  }
 }
 
 function removeFile(index) {
@@ -268,11 +400,27 @@ function removeFile(index) {
       URL.revokeObjectURL(selectedFiles[index]._previewUrl);
     } catch (e) {}
   }
+
+  const wasActive = activePreviewIndex === index;
+
   selectedFiles.splice(index, 1);
-  renderFileList();
+
+  if (selectedFiles.length === 0) {
+    closeSidePreview();
+  } else if (wasActive) {
+    // If the active one was deleted, switch to the next valid or close
+    const newIdx = Math.min(index, selectedFiles.length - 1);
+    openSidePreview(newIdx);
+  } else if (activePreviewIndex > index) {
+    activePreviewIndex--;
+    renderFileList();
+  } else {
+    renderFileList();
+  }
 }
 
 function clearAllFiles() {
+  closeSidePreview();
   selectedFiles.forEach(f => {
     if (f._previewUrl) {
       try { URL.revokeObjectURL(f._previewUrl); } catch (e) {}

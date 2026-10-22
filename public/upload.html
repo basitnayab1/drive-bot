@@ -12,15 +12,17 @@
 </head>
 <body>
 
-  <div class="upload-wrapper">
-    <!-- Brand Header -->
-    <div class="brand-header">
-      <div class="brand-badge">
-        <i class="fa-solid fa-shield-halved"></i> Direct Cloud Ingestion Portal
+  <div class="portal-container" id="portalContainer">
+    <!-- Main Upload Column -->
+    <div class="upload-wrapper" id="uploadWrapper">
+      <!-- Brand Header -->
+      <div class="brand-header">
+        <div class="brand-badge">
+          <i class="fa-solid fa-shield-halved"></i> Direct Cloud Ingestion Portal
+        </div>
+        <h1 id="pageTitle">Client File Upload</h1>
+        <p id="pageSubtitle">Please select or drag your files below to upload directly to our storage.</p>
       </div>
-      <h1 id="pageTitle">Client File Upload</h1>
-      <p id="pageSubtitle">Please select or drag your files below to upload directly to our storage.</p>
-    </div>
 
     <!-- Main Upload Card -->
     <div class="upload-card">
@@ -127,12 +129,47 @@
       </div>
 
     </div>
-
+    
     <div class="footer-note">
       <i class="fa-solid fa-lock"></i> Protected with end-to-end cloud ingestion • CloudDrop
     </div>
   </div>
 
-  <script src="/js/upload.js"></script>
+  <!-- Right Column: Interactive Side Preview Panel -->
+  <div class="side-preview-panel" id="sidePreviewPanel" style="display: none;">
+    <div class="side-preview-card">
+      <div class="side-preview-header">
+        <div class="side-preview-title-box">
+          <div class="preview-badge"><i class="fa-solid fa-eye"></i> Live Preview</div>
+          <h4 id="sidePreviewFileName" class="side-preview-filename" title="">File Preview</h4>
+          <div id="sidePreviewMeta" class="side-preview-meta">Image • 2.5 MB</div>
+        </div>
+        <button type="button" class="btn-close-preview" onclick="closeSidePreview()" title="Close side preview">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="side-preview-body" id="sidePreviewBody">
+        <!-- Live media rendered dynamically (image, video, etc.) -->
+      </div>
+
+      <div class="side-preview-footer">
+        <div class="preview-nav-info">
+          <span id="previewNavIndex">File 1 of 2</span>
+        </div>
+        <div class="preview-nav-btns">
+          <button type="button" class="btn-preview-nav" onclick="prevPreview()" title="View previous file">
+            <i class="fa-solid fa-chevron-left"></i> Previous
+          </button>
+          <button type="button" class="btn-preview-nav" onclick="nextPreview()" title="View next file">
+            Next <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/upload.js"></script>
 </body>
 </html>
