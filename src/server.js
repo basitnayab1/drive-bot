@@ -163,6 +163,7 @@ app.get('/api/public/link/:id', (req, res) => {
 
   // Check expiration
   const isExpired = Boolean(link.status === 'expired' || (link.expiresAt && new Date(link.expiresAt) <= new Date()));
+  const linkUploads = storage.getUploadsByLinkId(id);
 
   res.json({
     valid: true,
@@ -174,7 +175,16 @@ app.get('/api/public/link/:id', (req, res) => {
     expiresAt: link.expiresAt,
     maxFileSizeMB: link.maxFileSizeMB,
     allowedExtensions: link.allowedExtensions,
-    notes: link.notes
+    notes: link.notes,
+    uploads: linkUploads.map(u => ({
+      id: u.id,
+      fileName: u.fileName,
+      fileSize: u.fileSize,
+      mimeType: u.mimeType,
+      uploadedAt: u.uploadedAt,
+      driveLink: u.driveWebViewLink || null,
+      status: u.status
+    }))
   });
 });
 

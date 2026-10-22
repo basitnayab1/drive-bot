@@ -788,6 +788,76 @@ body {
   background: rgba(255, 255, 255, 0.15);
 }
 
+/* Already Uploaded Files Section */
+.already-uploaded-card {
+  margin-top: 1.75rem;
+  background: rgba(16, 185, 129, 0.03);
+  border: 1px solid rgba(16, 185, 129, 0.18);
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1.15rem;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.already-uploaded-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.already-uploaded-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #34d399;
+}
+
+.already-uploaded-body {
+  margin-top: 0.85rem;
+  max-height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.already-uploaded-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.15s ease;
+}
+
+.already-uploaded-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-file-drive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  font-size: 0.72rem;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.btn-file-drive:hover {
+  background: #6366f1;
+  color: #fff;
+}
+
 .footer-note {
   text-align: center;
   margin-top: 1.5rem;

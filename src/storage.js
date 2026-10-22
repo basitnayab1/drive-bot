@@ -165,6 +165,13 @@ function getAllUploads() {
   return db.uploads.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
 }
 
+function getUploadsByLinkId(linkId) {
+  const db = loadDB();
+  return db.uploads
+    .filter(u => u.linkId === linkId)
+    .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+}
+
 function getSettings() {
   const db = loadDB();
   return {
@@ -191,6 +198,7 @@ module.exports = {
   recordUpload,
   updateUpload,
   getAllUploads,
+  getUploadsByLinkId,
   getSettings,
   updateSettings
 };

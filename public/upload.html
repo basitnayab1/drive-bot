@@ -103,6 +103,23 @@
         <button id="btnUpload" class="upload-btn" onclick="startUpload()" style="display: none;">
           <i class="fa-solid fa-cloud-arrow-up"></i> Upload <span id="fileCountBtnBadge">0</span> Files Now
         </button>
+
+        <!-- Already / Previously Uploaded Files Section -->
+        <div id="alreadyUploadedSection" class="already-uploaded-card" style="display: none;">
+          <div class="already-uploaded-header">
+            <div class="already-uploaded-title">
+              <i class="fa-solid fa-cloud-arrow-down" style="color: #34d399;"></i>
+              <span>Uploaded Files in this Link (<strong id="alreadyUploadedCount">0</strong>)</span>
+              <span class="total-size-pill" id="alreadyUploadedTotalSize">0 MB</span>
+            </div>
+            <button type="button" class="btn-text-action" id="btnToggleAlreadyUploaded" onclick="toggleAlreadyUploadedList()" title="Collapse or expand uploaded files list">
+              <i class="fa-solid fa-chevron-up" id="alreadyUploadedChevron"></i>
+            </button>
+          </div>
+          <div id="alreadyUploadedList" class="uploaded-files-scrollable already-uploaded-body">
+            <!-- List of previously uploaded files -->
+          </div>
+        </div>
       </div>
 
       <!-- SUCCESS STATE: Shown after upload completes -->

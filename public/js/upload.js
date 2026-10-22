@@ -4,6 +4,8 @@ let linkId = '';
 let selectedFiles = [];
 let linkData = null;
 let activePreviewIndex = -1;
+let linkUploads = [];
+let alreadyUploadedCollapsed = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   // Extract link ID from path /u/:id or /upload/:id
@@ -58,6 +60,9 @@ async function fetchLinkDetails() {
     if (data.maxFileSizeMB) {
       document.getElementById('maxSizeText').innerText = data.maxFileSizeMB;
     }
+
+    linkUploads = data.uploads || [];
+    renderAlreadyUploadedSection();
   } catch (err) {
     document.getElementById('loadingState').style.display = 'none';
     showErrorState('Network error connecting to server. Please refresh.');
@@ -480,7 +485,18 @@ function startUpload() {
     if (xhr.status === 200) {
       try {
         const response = JSON.parse(xhr.responseText);
-        showUploadSuccess(response.files || []);
+        const newFiles = response.files || [];
+        newFiles.forEach(nf => {
+          const exists = linkUploads.some(u => 
+            u.fileName === nf.fileName && 
+            (u.fileSize || u.size) === (nf.size || nf.fileSize)
+          );
+          if (!exists) {
+            linkUploads.unshift(nf);
+          }
+        });
+        renderAlreadyUploadedSection();
+        showUploadSuccess(newFiles);
       } catch (e) {
         showUploadSuccess(selectedFiles);
       }
@@ -548,6 +564,7 @@ function showUploadSuccess(uploadedFiles) {
     const info = getFileTypeInfo(f);
     const fileName = f.fileName || f.name || 'File';
     const fileSize = f.size || f.fileSize || 0;
+    const driveLink = f.driveLink || f.driveWebViewLink || null;
 
     return `
       <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.65rem; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
@@ -560,10 +577,77 @@ function showUploadSuccess(uploadedFiles) {
         <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: 10px;">
           <span class="badge-ext">${escapeHtml(info.ext)}</span>
           <span style="color: var(--text-muted); font-size: 0.74rem;">${formatBytes(fileSize)}</span>
+          ${driveLink ? `
+            <a href="${driveLink}" target="_blank" rel="noopener noreferrer" class="btn-file-drive" title="View in Google Drive">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
+          ` : ''}
         </div>
       </div>
     `;
   }).join('');
+}
+
+function renderAlreadyUploadedSection() {
+  const section = document.getElementById('alreadyUploadedSection');
+  const listEl = document.getElementById('alreadyUploadedList');
+  const countEl = document.getElementById('alreadyUploadedCount');
+  const sizeEl = document.getElementById('alreadyUploadedTotalSize');
+
+  if (!section || !listEl) return;
+
+  if (!linkUploads || linkUploads.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  const totalBytes = linkUploads.reduce((acc, u) => acc + (u.fileSize || u.size || 0), 0);
+
+  if (countEl) countEl.innerText = linkUploads.length;
+  if (sizeEl) sizeEl.innerText = formatBytes(totalBytes);
+
+  listEl.innerHTML = linkUploads.map(file => {
+    const info = getFileTypeInfo(file);
+    const fileName = file.fileName || file.name || 'File';
+    const fileSize = file.fileSize || file.size || 0;
+    const driveLink = file.driveLink || file.driveWebViewLink || null;
+
+    return `
+      <div class="already-uploaded-item">
+        <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+          <i class="fa-solid fa-circle-check" style="color: #34d399; font-size: 0.95rem; flex-shrink: 0;"></i>
+          <span style="font-size: 0.84rem; font-weight: 500; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(fileName)}">
+            ${escapeHtml(fileName)}
+          </span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: 10px;">
+          <span class="badge-ext">${escapeHtml(info.ext)}</span>
+          <span style="color: var(--text-muted); font-size: 0.74rem;">${formatBytes(fileSize)}</span>
+          ${driveLink ? `
+            <a href="${driveLink}" target="_blank" rel="noopener noreferrer" class="btn-file-drive" title="View in Google Drive">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleAlreadyUploadedList() {
+  const listEl = document.getElementById('alreadyUploadedList');
+  const chevron = document.getElementById('alreadyUploadedChevron');
+  if (!listEl) return;
+
+  alreadyUploadedCollapsed = !alreadyUploadedCollapsed;
+  if (alreadyUploadedCollapsed) {
+    listEl.style.display = 'none';
+    if (chevron) chevron.className = 'fa-solid fa-chevron-down';
+  } else {
+    listEl.style.display = 'flex';
+    if (chevron) chevron.className = 'fa-solid fa-chevron-up';
+  }
 }
 
 function resetUploader() {
@@ -573,6 +657,7 @@ function resetUploader() {
   if (successState) successState.style.display = 'none';
   if (activeState) activeState.style.display = 'block';
   resetUploaderState();
+  renderAlreadyUploadedSection();
   triggerFileInput();
 }
 
