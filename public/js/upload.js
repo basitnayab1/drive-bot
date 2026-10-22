@@ -241,7 +241,15 @@ function renderFileList() {
     if (section) section.style.display = 'none';
     if (fileListEl) fileListEl.innerHTML = '';
     if (uploadBtn) uploadBtn.style.display = 'none';
-    closeSidePreview();
+    
+    // Close preview directly without invoking renderFileList recursively
+    activePreviewIndex = -1;
+    const panel = document.getElementById('sidePreviewPanel');
+    const container = document.getElementById('portalContainer');
+    const body = document.getElementById('sidePreviewBody');
+    if (body) body.innerHTML = '';
+    if (panel) panel.style.display = 'none';
+    if (container) container.classList.remove('has-preview');
     return;
   }
 
@@ -367,7 +375,9 @@ function closeSidePreview() {
   if (panel) panel.style.display = 'none';
   if (container) container.classList.remove('has-preview');
 
-  renderFileList();
+  if (selectedFiles.length > 0) {
+    renderFileList();
+  }
 }
 
 function toggleSidePreview(index) {
@@ -406,7 +416,7 @@ function removeFile(index) {
   selectedFiles.splice(index, 1);
 
   if (selectedFiles.length === 0) {
-    closeSidePreview();
+    renderFileList();
   } else if (wasActive) {
     // If the active one was deleted, switch to the next valid or close
     const newIdx = Math.min(index, selectedFiles.length - 1);
@@ -420,14 +430,14 @@ function removeFile(index) {
 }
 
 function clearAllFiles() {
-  closeSidePreview();
   selectedFiles.forEach(f => {
     if (f._previewUrl) {
       try { URL.revokeObjectURL(f._previewUrl); } catch (e) {}
     }
   });
   selectedFiles = [];
-  document.getElementById('fileInput').value = '';
+  const fileInput = document.getElementById('fileInput');
+  if (fileInput) fileInput.value = '';
   renderFileList();
 }
 
@@ -500,11 +510,23 @@ function resetUploaderState() {
   const uploadBtn = document.getElementById('btnUpload');
   const dropzone = document.getElementById('dropzone');
   const progressContainer = document.getElementById('progressContainer');
+  const progressBar = document.getElementById('progressBar');
+  const progressPercent = document.getElementById('progressPercent');
+  const progressText = document.getElementById('progressText');
 
-  uploadBtn.disabled = false;
-  dropzone.style.pointerEvents = 'auto';
-  dropzone.style.opacity = '1';
-  progressContainer.style.display = 'none';
+  if (uploadBtn) {
+    uploadBtn.disabled = false;
+    uploadBtn.style.display = 'none';
+  }
+  if (dropzone) {
+    dropzone.style.pointerEvents = 'auto';
+    dropzone.style.opacity = '1';
+    dropzone.classList.remove('dragover');
+  }
+  if (progressContainer) progressContainer.style.display = 'none';
+  if (progressBar) progressBar.style.width = '0%';
+  if (progressPercent) progressPercent.innerText = '0%';
+  if (progressText) progressText.innerText = 'Uploading...';
 }
 
 function showUploadSuccess(uploadedFiles) {
@@ -546,9 +568,12 @@ function showUploadSuccess(uploadedFiles) {
 
 function resetUploader() {
   clearAllFiles();
-  document.getElementById('successState').style.display = 'none';
-  document.getElementById('activeState').style.display = 'block';
+  const successState = document.getElementById('successState');
+  const activeState = document.getElementById('activeState');
+  if (successState) successState.style.display = 'none';
+  if (activeState) activeState.style.display = 'block';
   resetUploaderState();
+  triggerFileInput();
 }
 
 function formatBytes(bytes, decimals = 1) {
