@@ -101,6 +101,84 @@ function triggerFileInput() {
   document.getElementById('fileInput').click();
 }
 
+// Get file type metadata, icon and extension info
+function getFileTypeInfo(file) {
+  const name = file.name || file.fileName || '';
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const mime = (file.type || file.mimeType || '').toLowerCase();
+
+  if (mime.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext)) {
+    return {
+      type: 'image',
+      icon: 'fa-file-image',
+      className: 'icon-image',
+      ext: ext || 'IMG'
+    };
+  }
+  if (ext === 'pdf' || mime === 'application/pdf') {
+    return {
+      type: 'pdf',
+      icon: 'fa-file-pdf',
+      className: 'icon-pdf',
+      ext: 'PDF'
+    };
+  }
+  if (['doc', 'docx', 'odt', 'rtf', 'txt'].includes(ext)) {
+    return {
+      type: 'doc',
+      icon: 'fa-file-word',
+      className: 'icon-word',
+      ext: ext.toUpperCase()
+    };
+  }
+  if (['xls', 'xlsx', 'csv', 'ods'].includes(ext)) {
+    return {
+      type: 'sheet',
+      icon: 'fa-file-excel',
+      className: 'icon-excel',
+      ext: ext.toUpperCase()
+    };
+  }
+  if (['mp4', 'mov', 'avi', 'mkv', 'webm', 'wmv'].includes(ext) || mime.startsWith('video/')) {
+    return {
+      type: 'video',
+      icon: 'fa-file-video',
+      className: 'icon-video',
+      ext: ext.toUpperCase()
+    };
+  }
+  if (['mp3', 'wav', 'ogg', 'm4a', 'flac'].includes(ext) || mime.startsWith('audio/')) {
+    return {
+      type: 'audio',
+      icon: 'fa-file-audio',
+      className: 'icon-audio',
+      ext: ext.toUpperCase()
+    };
+  }
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
+    return {
+      type: 'archive',
+      icon: 'fa-file-zipper',
+      className: 'icon-archive',
+      ext: ext.toUpperCase()
+    };
+  }
+  if (['js', 'ts', 'html', 'css', 'json', 'py', 'java', 'cpp', 'c', 'php', 'sql'].includes(ext)) {
+    return {
+      type: 'code',
+      icon: 'fa-file-code',
+      className: 'icon-code',
+      ext: ext.toUpperCase()
+    };
+  }
+  return {
+    type: 'default',
+    icon: 'fa-file-lines',
+    className: 'icon-default',
+    ext: ext ? ext.toUpperCase() : 'FILE'
+  };
+}
+
 function handleFilesSelected(files) {
   if (!files || files.length === 0) return;
 
@@ -110,50 +188,98 @@ function handleFilesSelected(files) {
     const file = files[i];
 
     if (file.size > maxBytes) {
-      alert(`File "${file.name}" exceeds the allowed size limit of ${linkData.maxFileSizeMB} MB.`);
+      alert(`File "${file.name}" exceeds the allowed size limit of ${linkData?.maxFileSizeMB || 500} MB.`);
       continue;
     }
 
     // Avoid exact duplicate in current selection
     if (!selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
+      if (file.type && file.type.startsWith('image/')) {
+        try {
+          file._previewUrl = URL.createObjectURL(file);
+        } catch (e) {}
+      }
       selectedFiles.push(file);
     }
   }
+
+  // Clear input so selecting the same file again triggers change
+  document.getElementById('fileInput').value = '';
 
   renderFileList();
 }
 
 function renderFileList() {
+  const section = document.getElementById('selectedFilesSection');
   const fileListEl = document.getElementById('fileList');
   const uploadBtn = document.getElementById('btnUpload');
   const countBadge = document.getElementById('fileCountBadge');
+  const btnCountBadge = document.getElementById('fileCountBtnBadge');
+  const totalSizeBadge = document.getElementById('totalSizeBadge');
 
   if (selectedFiles.length === 0) {
-    fileListEl.style.display = 'none';
-    uploadBtn.style.display = 'none';
+    if (section) section.style.display = 'none';
+    if (fileListEl) fileListEl.innerHTML = '';
+    if (uploadBtn) uploadBtn.style.display = 'none';
     return;
   }
 
-  fileListEl.style.display = 'flex';
-  uploadBtn.style.display = 'flex';
-  countBadge.innerText = selectedFiles.length;
+  if (section) section.style.display = 'block';
+  if (uploadBtn) uploadBtn.style.display = 'flex';
 
-  fileListEl.innerHTML = selectedFiles.map((file, idx) => `
-    <div class="file-item">
-      <div class="file-item-info">
-        <i class="fa-regular fa-file" style="color: #818cf8; font-size: 1.25rem;"></i>
-        <div>
-          <div class="file-item-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div>
-          <div class="file-item-size">${formatBytes(file.size)}</div>
+  const totalBytes = selectedFiles.reduce((acc, f) => acc + (f.size || 0), 0);
+  if (countBadge) countBadge.innerText = selectedFiles.length;
+  if (btnCountBadge) btnCountBadge.innerText = selectedFiles.length;
+  if (totalSizeBadge) totalSizeBadge.innerText = formatBytes(totalBytes);
+
+  fileListEl.innerHTML = selectedFiles.map((file, idx) => {
+    const info = getFileTypeInfo(file);
+    let previewHtml = '';
+
+    if (info.type === 'image' && file._previewUrl) {
+      previewHtml = `<img src="${file._previewUrl}" alt="Preview" class="file-thumb-preview" onerror="this.onerror=null; this.src=''; this.className='file-icon-badge icon-image';">`;
+    } else {
+      previewHtml = `<div class="file-icon-badge ${info.className}"><i class="fa-solid ${info.icon}"></i></div>`;
+    }
+
+    return `
+      <div class="file-item-card" id="fileItem_${idx}">
+        <div class="file-item-left">
+          ${previewHtml}
+          <div class="file-details">
+            <div class="file-name-text" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div>
+            <div class="file-meta-row">
+              <span class="badge-ext">${escapeHtml(info.ext)}</span>
+              <span>${formatBytes(file.size)}</span>
+            </div>
+          </div>
         </div>
+        <button type="button" class="btn-remove-item" onclick="removeFile(${idx})" title="Remove this file">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
-      <button class="file-item-remove" onclick="removeFile(${idx})" title="Remove file">&times;</button>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function removeFile(index) {
+  if (selectedFiles[index] && selectedFiles[index]._previewUrl) {
+    try {
+      URL.revokeObjectURL(selectedFiles[index]._previewUrl);
+    } catch (e) {}
+  }
   selectedFiles.splice(index, 1);
+  renderFileList();
+}
+
+function clearAllFiles() {
+  selectedFiles.forEach(f => {
+    if (f._previewUrl) {
+      try { URL.revokeObjectURL(f._previewUrl); } catch (e) {}
+    }
+  });
+  selectedFiles = [];
+  document.getElementById('fileInput').value = '';
   renderFileList();
 }
 
@@ -201,7 +327,6 @@ function startUpload() {
         showUploadSuccess(selectedFiles);
       }
     } else if (xhr.status === 403) {
-      // Link expired during upload
       alert('This link has expired or has been closed by the owner.');
       window.location.reload();
     } else {
@@ -239,22 +364,43 @@ function showUploadSuccess(uploadedFiles) {
   const successState = document.getElementById('successState');
   successState.style.display = 'block';
 
+  const filesArray = uploadedFiles && uploadedFiles.length > 0 ? uploadedFiles : selectedFiles;
+  const count = filesArray.length;
+  const totalBytes = filesArray.reduce((acc, f) => acc + (f.size || f.fileSize || 0), 0);
+
+  const countEl = document.getElementById('successFileCount');
+  const sizeEl = document.getElementById('successTotalSize');
+  if (countEl) countEl.innerText = count;
+  if (sizeEl) sizeEl.innerText = formatBytes(totalBytes);
+
   const summary = document.getElementById('uploadedFilesSummary');
-  summary.innerHTML = uploadedFiles.map(f => `
-    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-      <span><i class="fa-solid fa-file-circle-check" style="color: #34d399; margin-right: 6px;"></i> ${escapeHtml(f.fileName || f.name)}</span>
-      <span style="color: var(--text-muted); font-size: 0.75rem;">${formatBytes(f.size || f.fileSize || 0)}</span>
-    </div>
-  `).join('');
+  summary.innerHTML = filesArray.map(f => {
+    const info = getFileTypeInfo(f);
+    const fileName = f.fileName || f.name || 'File';
+    const fileSize = f.size || f.fileSize || 0;
+
+    return `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.65rem; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+        <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+          <i class="fa-solid fa-circle-check" style="color: #34d399; font-size: 0.95rem; flex-shrink: 0;"></i>
+          <span style="font-size: 0.84rem; font-weight: 500; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(fileName)}">
+            ${escapeHtml(fileName)}
+          </span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: 10px;">
+          <span class="badge-ext">${escapeHtml(info.ext)}</span>
+          <span style="color: var(--text-muted); font-size: 0.74rem;">${formatBytes(fileSize)}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 function resetUploader() {
-  selectedFiles = [];
-  document.getElementById('fileInput').value = '';
+  clearAllFiles();
   document.getElementById('successState').style.display = 'none';
   document.getElementById('activeState').style.display = 'block';
   resetUploaderState();
-  renderFileList();
 }
 
 function formatBytes(bytes, decimals = 1) {

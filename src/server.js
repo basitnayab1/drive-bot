@@ -179,7 +179,7 @@ app.get('/api/public/link/:id', (req, res) => {
 });
 
 // API: Handle file upload from client
-app.post('/api/upload/:id', upload.array('files', 20), async (req, res) => {
+app.post('/api/upload/:id', upload.array('files', 100), async (req, res) => {
   const { id } = req.params;
   const link = storage.getLinkById(id);
 

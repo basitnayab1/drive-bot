@@ -161,60 +161,257 @@ body {
   margin-bottom: 1.25rem;
 }
 
-/* File List */
-.file-list {
+/* Selected Files Multi-File Section */
+.selected-files-section {
   margin-top: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  max-height: 250px;
-  overflow-y: auto;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
-.file-item {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 0.75rem 1rem;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.selected-files-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.95rem;
+  margin-bottom: 0.75rem;
 }
 
-.file-item-info {
+.selected-files-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.total-size-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-left: 4px;
+}
+
+.selected-files-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-text-action {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.btn-text-action:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-text-action.danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Scrollable File List */
+.file-list-scrollable {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-height: 330px;
+  overflow-y: auto;
+  padding-right: 6px;
+  margin-bottom: 0.5rem;
+}
+
+/* Custom Scrollbar */
+.file-list-scrollable::-webkit-scrollbar,
+.uploaded-files-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.file-list-scrollable::-webkit-scrollbar-track,
+.uploaded-files-scrollable::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+
+.file-list-scrollable::-webkit-scrollbar-thumb,
+.uploaded-files-scrollable::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+}
+
+.file-list-scrollable::-webkit-scrollbar-thumb:hover,
+.uploaded-files-scrollable::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.5);
+}
+
+/* Individual File Card */
+.file-item-card {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.file-item-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.file-item-left {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  overflow: hidden;
+  min-width: 0;
+  flex: 1;
 }
 
-.file-item-name {
-  font-size: 0.875rem;
+/* Thumbnail / Icon */
+.file-thumb-preview {
+  width: 42px;
+  height: 42px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.file-icon-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.icon-pdf { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+.icon-word { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.icon-excel { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+.icon-image { background: rgba(14, 165, 233, 0.15); color: #38bdf8; }
+.icon-video { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+.icon-audio { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.icon-archive { background: rgba(234, 179, 8, 0.15); color: #fde047; }
+.icon-code { background: rgba(236, 72, 153, 0.15); color: #f472b6; }
+.icon-default { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+
+.file-details {
+  min-width: 0;
+  flex: 1;
+}
+
+.file-name-text {
+  font-size: 0.85rem;
   font-weight: 600;
+  color: var(--text-main);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 320px;
 }
 
-.file-item-size {
-  font-size: 0.75rem;
+.file-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.74rem;
   color: var(--text-muted);
+  margin-top: 2px;
 }
 
-.file-item-remove {
-  background: none;
-  border: none;
+.badge-ext {
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: #cbd5e1;
+}
+
+.btn-remove-item {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
   color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  font-size: 1.25rem;
-  padding: 0.25rem;
-  transition: color 0.2s;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  flex-shrink: 0;
 }
 
-.file-item-remove:hover {
-  color: var(--danger);
+.btn-remove-item:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+/* Success Summary Card */
+.success-summary-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.success-summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.6rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.uploaded-files-scrollable {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-right: 4px;
 }
 
 /* Progress bar */
