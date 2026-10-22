@@ -151,6 +151,15 @@ function recordUpload(uploadData) {
   return newUpload;
 }
 
+function updateUpload(id, updates) {
+  const db = loadDB();
+  const upload = db.uploads.find(u => u.id === id);
+  if (!upload) return null;
+  Object.assign(upload, updates);
+  saveDB(db);
+  return upload;
+}
+
 function getAllUploads() {
   const db = loadDB();
   return db.uploads.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
@@ -180,6 +189,7 @@ module.exports = {
   updateLinkStatus,
   deleteLink,
   recordUpload,
+  updateUpload,
   getAllUploads,
   getSettings,
   updateSettings

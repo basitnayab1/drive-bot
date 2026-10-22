@@ -296,22 +296,23 @@ app.post('/api/sync-pending', async (req, res) => {
       );
 
       // Update upload record in DB
-      item.status = 'synced';
-      item.driveFileId = driveFile.id;
-      item.driveWebViewLink = driveFile.webViewLink;
+      storage.updateUpload(item.id, {
+        status: 'synced',
+        driveFileId: driveFile.id,
+        driveWebViewLink: driveFile.webViewLink,
+        localPath: null
+      });
 
       // Clean local file
       if (fs.existsSync(item.localPath)) {
         fs.unlinkSync(item.localPath);
       }
-      item.localPath = null;
       syncedCount++;
     } catch (err) {
       console.error(`Failed to sync ${item.fileName}:`, err.message);
     }
   }
 
-  const db = storage.loadDB ? storage.loadDB() : null; // save changes
   res.json({ success: true, syncedCount, totalPending: pending.length });
 });
 
