@@ -264,7 +264,14 @@
             <ol style="margin-left: 1.25rem; color: var(--text-muted);">
               <li>Google Cloud Console me <strong>Credentials</strong> &rarr; <strong>Create Credentials</strong> &rarr; <strong>OAuth client ID</strong> pr click karein.</li>
               <li>Application type: <strong>Web application</strong> select karein.</li>
-              <li>Authorized redirect URIs me yeh add karein: <code style="color: #38bdf8;">http://localhost:3000/oauth2callback</code></li>
+              <li>Authorized redirect URIs me yeh add karein: 
+                <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
+                  <code id="dynamicRedirectUri" style="color: #38bdf8; background: rgba(56, 189, 248, 0.12); padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 0.82rem;">http://localhost:3000/oauth2callback</code>
+                  <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 8px; font-size: 0.75rem;" onclick="copyRedirectUri()" title="Copy Redirect URI">
+                    <i class="fa-solid fa-copy"></i> Copy URI
+                  </button>
+                </div>
+              </li>
               <li>Wahan se <strong>Client ID</strong> aur <strong>Client Secret</strong> copy kr k neeche paste karein.</li>
             </ol>
           </div>

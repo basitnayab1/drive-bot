@@ -10,10 +10,10 @@ const OAUTH_CONFIG_PATH = path.join(config.DATA_DIR, 'oauth_client.json');
 let driveClient = null;
 let currentAuthMode = null; // 'oauth2' or 'service_account'
 
-function getOAuthClient() {
+function getOAuthClient(customRedirectUri) {
   let clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
   let clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
-  let redirectUri = `http://localhost:${config.PORT}/oauth2callback`;
+  let redirectUri = customRedirectUri || `http://localhost:${config.PORT}/oauth2callback`;
 
   if (fs.existsSync(OAUTH_CONFIG_PATH)) {
     try {
@@ -22,11 +22,11 @@ function getOAuthClient() {
         const c = cfg.web || cfg.installed;
         clientId = c.client_id;
         clientSecret = c.client_secret;
-        redirectUri = (c.redirect_uris && c.redirect_uris[0]) || redirectUri;
+        redirectUri = customRedirectUri || (c.redirect_uris && c.redirect_uris[0]) || redirectUri;
       } else if (cfg.client_id) {
         clientId = cfg.client_id;
         clientSecret = cfg.client_secret;
-        redirectUri = cfg.redirect_uri || redirectUri;
+        redirectUri = customRedirectUri || cfg.redirect_uri || redirectUri;
       }
     } catch (e) {}
   }
@@ -99,8 +99,8 @@ function reloadClient() {
 /**
  * Generate Google OAuth Login URL
  */
-function getOAuthAuthUrl() {
-  const oauthClient = getOAuthClient();
+function getOAuthAuthUrl(customRedirectUri) {
+  const oauthClient = getOAuthClient(customRedirectUri);
   if (!oauthClient) return null;
 
   return oauthClient.generateAuthUrl({
@@ -117,8 +117,8 @@ function getOAuthAuthUrl() {
 /**
  * Handle OAuth Callback code and exchange for tokens
  */
-async function handleOAuthCallback(code) {
-  const oauthClient = getOAuthClient();
+async function handleOAuthCallback(code, customRedirectUri) {
+  const oauthClient = getOAuthClient(customRedirectUri);
   if (!oauthClient) throw new Error('OAuth Client not configured.');
 
   const { tokens } = await oauthClient.getToken(code);

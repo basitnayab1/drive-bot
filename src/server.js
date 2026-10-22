@@ -366,8 +366,13 @@ app.post('/api/config/save-credentials', (req, res) => {
 // OAuth2: Save Client ID & Secret
 app.post('/api/config/save-oauth', (req, res) => {
   try {
-    const { clientId, clientSecret, oauthJson, folderId } = req.body;
+    const { clientId, clientSecret, oauthJson, folderId, redirectUri: reqRedirectUri } = req.body;
     let configToSave = null;
+
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.get('host');
+    const dynamicRedirectUri = `${protocol}://${host}/oauth2callback`;
+    const finalRedirectUri = reqRedirectUri || dynamicRedirectUri;
 
     if (oauthJson && oauthJson.trim()) {
       configToSave = JSON.parse(oauthJson.trim());
@@ -375,7 +380,7 @@ app.post('/api/config/save-oauth', (req, res) => {
       configToSave = {
         client_id: clientId.trim(),
         client_secret: clientSecret.trim(),
-        redirect_uri: `http://localhost:${config.PORT}/oauth2callback`
+        redirect_uri: finalRedirectUri
       };
     } else {
       return res.status(400).json({ error: 'Client ID & Client Secret or OAuth JSON required.' });
@@ -387,7 +392,7 @@ app.post('/api/config/save-oauth', (req, res) => {
       storage.updateSettings({ googleDriveFolderId: folderId.trim() });
     }
 
-    const authUrl = driveService.getOAuthAuthUrl();
+    const authUrl = driveService.getOAuthAuthUrl(finalRedirectUri);
     res.json({ success: true, authUrl });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -396,7 +401,11 @@ app.post('/api/config/save-oauth', (req, res) => {
 
 // OAuth2: Redirect to Google Login
 app.get('/auth/google', (req, res) => {
-  const url = driveService.getOAuthAuthUrl();
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const host = req.get('host');
+  const redirectUri = `${protocol}://${host}/oauth2callback`;
+
+  const url = driveService.getOAuthAuthUrl(redirectUri);
   if (!url) {
     return res.status(400).send('OAuth is not configured yet. Please configure OAuth Client ID and Secret in settings.');
   }
@@ -414,7 +423,10 @@ app.get('/oauth2callback', async (req, res) => {
   }
 
   try {
-    const result = await driveService.handleOAuthCallback(code);
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.get('host');
+    const redirectUri = `${protocol}://${host}/oauth2callback`;
+    const result = await driveService.handleOAuthCallback(code, redirectUri);
     res.redirect('/?oauth_success=1&email=' + encodeURIComponent(result.email || ''));
   } catch (err) {
     res.redirect('/?oauth_error=' + encodeURIComponent(err.message));
@@ -436,7 +448,7 @@ app.get('/api/config/oauth-status', (req, res) => {
 
 // Start Server
 if (!process.env.VERCEL) {
-  app.listen(config.PORT, () => {
+  app.listen(config.PORT, '0.0.0.0', () => {
     console.log(`=================================================`);
     console.log(`🚀 Drive Client Drop Portal is running!`);
     console.log(`💻 Admin Dashboard: http://localhost:${config.PORT}`);

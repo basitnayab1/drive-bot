@@ -408,7 +408,16 @@ async function handleCreateLink(e) {
 // Modal controls: Google Drive Settings
 function openDriveModal() {
   document.getElementById('driveSettingsModal').classList.add('active');
+  const redirectUri = `${window.location.origin}/oauth2callback`;
+  const uriElem = document.getElementById('dynamicRedirectUri');
+  if (uriElem) uriElem.innerText = redirectUri;
   checkDriveConnection();
+}
+
+function copyRedirectUri() {
+  const uri = `${window.location.origin}/oauth2callback`;
+  copyToClipboard(uri);
+  showToast('Redirect URI copied to clipboard!', 'success');
 }
 
 function closeDriveModal() {
@@ -440,6 +449,7 @@ async function saveOAuthAndLogin() {
   const clientId = document.getElementById('oauthClientId').value;
   const clientSecret = document.getElementById('oauthClientSecret').value;
   const folderId = document.getElementById('driveFolderIdInput').value;
+  const redirectUri = `${window.location.origin}/oauth2callback`;
 
   if (!clientId || !clientSecret) {
     showToast('Please enter both OAuth Client ID and Client Secret.', 'error');
@@ -450,7 +460,7 @@ async function saveOAuthAndLogin() {
     const res = await fetch('/api/config/save-oauth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId, clientSecret, folderId })
+      body: JSON.stringify({ clientId, clientSecret, folderId, redirectUri })
     });
 
     const data = await res.json();
